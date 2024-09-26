@@ -1,18 +1,16 @@
-name: tests
+name: Unit & Integration tests
 
 on:
-  push:
   pull_request:
 
 jobs:
   test:
-    if: github.ref == 'refs/heads/master'
     strategy:
       # Default is true, cancels jobs for other platforms in the matrix if one fails
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
-        go: [ '1.15' ]
+        os: [ ubuntu-latest ]
+        go: [ '1.20', '1.21' ]
 
     runs-on: ${{ matrix.os }}
 

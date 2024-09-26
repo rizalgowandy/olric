@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/*Package olric provides a distributed cache and in-memory key/value data store.
+/*
+Package olric provides a distributed cache and in-memory key/value data store.
 It can be used both as an embedded Go library and as a language-independent
 service.
 
@@ -22,7 +23,8 @@ a cluster of computers.
 Olric is designed to be a distributed cache. But it also provides Publish/Subscribe,
 data replication, failure detection and simple anti-entropy services.
 So it can be used as an ordinary key/value data store to scale your cloud
-application.*/
+application.
+*/
 package olric
 
 import (
@@ -55,7 +57,7 @@ import (
 )
 
 // ReleaseVersion is the current stable version of Olric
-const ReleaseVersion string = "0.5.0-beta.6"
+const ReleaseVersion string = "0.6.0-alpha.1"
 
 var (
 	// ErrOperationTimeout is returned when an operation times out.
@@ -83,14 +85,18 @@ var (
 	ErrNoSuchLock = errors.New("no such lock")
 
 	// ErrClusterQuorum means that the cluster could not reach a healthy numbers of members to operate.
-	ErrClusterQuorum = errors.New("cannot be reached cluster quorum to operate")
+	ErrClusterQuorum = errors.New("failed to find enough peers to create quorum")
 
 	// ErrKeyTooLarge means that the given key is too large to process.
 	// Maximum length of a key is 256 bytes.
 	ErrKeyTooLarge = errors.New("key too large")
 
-	// ErrEntryTooLarge returned if required space for an entry is bigger than table size.
+	// ErrEntryTooLarge returned if the required space for an entry is bigger than table size.
 	ErrEntryTooLarge = errors.New("entry too large for the configured table size")
+
+	// ErrConnRefused returned if the target node refused a connection request.
+	// It is good to call RefreshMetadata to update the underlying data structures.
+	ErrConnRefused = errors.New("connection refused")
 )
 
 // Olric implements a distributed cache and in-memory key/value data store.
@@ -335,6 +341,13 @@ func (db *Olric) Start() error {
 		return err
 	}
 
+	// First, we need to join the cluster. Then, the routing table has been started.
+	if err := db.rt.Join(); err != nil {
+		if err != nil {
+			db.log.V(2).Printf("[ERROR] Failed to join the Olric cluster: %v", err)
+		}
+		return err
+	}
 	// Start routing table service and member discovery subsystem.
 	if err := db.rt.Start(); err != nil {
 		if err != nil {

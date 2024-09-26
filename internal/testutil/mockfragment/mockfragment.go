@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,17 +44,15 @@ func New() *MockFragment {
 }
 
 func (f *MockFragment) Stats() storage.Stats {
-	return storage.Stats{}
+	f.Lock()
+	defer f.Unlock()
+	return storage.Stats{
+		Length: len(f.m),
+	}
 }
 
 func (f *MockFragment) Name() string {
 	return "Mock-DMap"
-}
-
-func (f *MockFragment) Length() int {
-	f.RLock()
-	defer f.RUnlock()
-	return len(f.m)
 }
 
 func (f *MockFragment) Put(key string, value interface{}) {

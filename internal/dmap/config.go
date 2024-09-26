@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ func (c *dmapConfig) load(dc *config.DMaps, name string) error {
 		}
 	}
 
-	// TODO: Create a new function to verify config config.
+	//TODO: Create a new function to verify config.
 	if c.evictionPolicy == config.LRUEviction {
 		if c.maxInuse <= 0 && c.maxKeys <= 0 {
 			return fmt.Errorf("maxInuse or maxKeys have to be greater than zero")

@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -142,6 +142,10 @@ func (t *TestCluster) AddMember(e *environment.Environment) service.Service {
 
 	s := t.newService(e)
 	rt := e.Get("routingtable").(*routingtable.RoutingTable)
+	err = rt.Join()
+	if err != nil {
+		panic(fmt.Sprintf("failed to join the Olric cluster: %v", err))
+	}
 	err = rt.Start()
 	if err != nil {
 		panic(fmt.Sprintf("failed to start the routing table: %v", err))

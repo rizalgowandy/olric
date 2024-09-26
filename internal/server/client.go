@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import (
 
 	"github.com/buraksezer/olric/config"
 	"github.com/buraksezer/olric/internal/roundrobin"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 type Client struct {
@@ -47,6 +47,17 @@ func NewClient(c *config.Client) *Client {
 	}
 }
 
+func (c *Client) Addresses() map[string]struct{} {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	addresses := make(map[string]struct{})
+	for address, _ := range c.clients {
+		addresses[address] = struct{}{}
+	}
+	return addresses
+}
+
 func (c *Client) Get(addr string) *redis.Client {
 	c.mu.RLock()
 	rc, ok := c.clients[addr]
@@ -61,6 +72,12 @@ func (c *Client) Get(addr string) *redis.Client {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
+	// Need to check again, because another goroutine may have updated clients
+	// between our calls to RUnlock and Lock.
+	if rc, ok = c.clients[addr]; ok {
+		return rc
+	}
+
 	opt := c.config.RedisOptions()
 	opt.Addr = addr
 	rc = redis.NewClient(opt)
@@ -69,22 +86,26 @@ func (c *Client) Get(addr string) *redis.Client {
 	return rc
 }
 
-func (c *Client) Pick() (*redis.Client, error) {
+func (c *Client) pickNodeRoundRobin() (string, error) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	addr, err := c.roundRobin.Get()
 	if err == roundrobin.ErrEmptyInstance {
-		return nil, fmt.Errorf("no available client found")
+		return "", fmt.Errorf("no available client found")
 	}
+	if err != nil {
+		return "", err
+	}
+	return addr, nil
+}
+
+func (c *Client) Pick() (*redis.Client, error) {
+	addr, err := c.pickNodeRoundRobin()
 	if err != nil {
 		return nil, err
 	}
-	rc, ok := c.clients[addr]
-	if !ok {
-		return nil, fmt.Errorf("client could not be found: %s", addr)
-	}
-	return rc, nil
+	return c.Get(addr), nil
 }
 
 func (c *Client) Close(addr string) error {

@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ func (b *Balancer) scanPartition(sign uint64, part *partitions.Partition, owners
 
 	part.Map().Range(func(rawName, rawFragment interface{}) bool {
 		f := rawFragment.(partitions.Fragment)
-		if f.Length() == 0 {
+		if f.Stats().Length == 0 {
 			return false
 		}
 		name := strings.TrimPrefix(rawName.(string), "dmap.")

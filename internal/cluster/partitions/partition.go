@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ func (p *Partition) Length() int {
 	var length int
 	p.Map().Range(func(_, tmp interface{}) bool {
 		u := tmp.(Fragment)
-		length += u.Length()
+		length += u.Stats().Length
 		// Continue scanning.
 		return true
 	})

@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import (
 	"github.com/buraksezer/olric/internal/resp"
 	"github.com/buraksezer/olric/internal/stats"
 	"github.com/buraksezer/olric/pkg/storage"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 var pool = bufpool.New()
@@ -214,10 +214,17 @@ func (dm *DMap) setLRUEvictionStats(e *env) error {
 	// But I think that it's good to use only one of time in a production system.
 	// Because it should be easy to understand and debug.
 	st := e.fragment.storage.Stats()
+
 	// This works for every request if you enabled LRU.
 	// But loading a number from memory should be very cheap.
 	// ownedPartitionCount changes in the case of node join or leave.
 	ownedPartitionCount := dm.s.rt.OwnedPartitionCount()
+	if ownedPartitionCount == 0 {
+		// Routing table is an eventually consistent data structure. In order to prevent a panic in prod,
+		// check the owned partition count before doing math.
+		return nil
+	}
+
 	if dm.config.maxKeys > 0 {
 		// MaxKeys controls maximum key count owned by this node.
 		// We need ownedPartitionCount property because every partition
@@ -302,7 +309,6 @@ func (dm *DMap) putOnCluster(e *env) error {
 			e.timeout = dm.config.ttlDuration
 		}
 		if dm.config.evictionPolicy == config.LRUEviction {
-			// TODO: What about lock?
 			if err = dm.setLRUEvictionStats(e); err != nil {
 				return err
 			}
@@ -389,20 +395,18 @@ type PutConfig struct {
 }
 
 // Put sets the value for the given key. It overwrites any previous value
-// for that key, and it's thread-safe. The key has to be string. value type
+// for that key, and it's thread-safe. The key has to be a string. value type
 // is arbitrary. It is safe to modify the contents of the arguments after
 // Put returns but not before.
 func (dm *DMap) Put(ctx context.Context, key string, value interface{}, cfg *PutConfig) error {
 	valueBuf := pool.Get()
+	defer pool.Put(valueBuf)
+
 	enc := resp.New(valueBuf)
 	err := enc.Encode(value)
 	if err != nil {
 		return err
 	}
-	defer func() {
-		// FIXME: This can be harmful for async replication
-		pool.Put(valueBuf)
-	}()
 
 	if cfg == nil {
 		cfg = &PutConfig{}
@@ -411,6 +415,7 @@ func (dm *DMap) Put(ctx context.Context, key string, value interface{}, cfg *Put
 	e.putConfig = cfg
 	e.dmap = dm.name
 	e.key = key
-	e.value = valueBuf.Bytes()
+	e.value = make([]byte, valueBuf.Len())
+	copy(e.value[:], valueBuf.Bytes())
 	return dm.put(e)
 }

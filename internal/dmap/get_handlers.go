@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -68,7 +68,6 @@ func (s *Service) getEntryCommandHandler(conn redcon.Conn, cmd redcon.Command) {
 	e.hkey = partitions.HKey(getEntryCmd.DMap, getEntryCmd.Key)
 	e.kind = kind
 	nt, err := dm.getOnFragment(e)
-	// TODO: errFragmentNotFound??
 	if err == errFragmentNotFound {
 		err = ErrKeyNotFound
 	}

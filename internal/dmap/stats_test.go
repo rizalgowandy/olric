@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ func TestDMap_Stats(t *testing.T) {
 
 	// DeleteHits
 	for i := 0; i < 10; i++ {
-		err = dm.Delete(ctx, testutil.ToKey(i))
+		_, err = dm.Delete(ctx, testutil.ToKey(i))
 		require.NoError(t, err)
 	}
 
@@ -61,7 +61,7 @@ func TestDMap_Stats(t *testing.T) {
 
 	// DeleteMisses
 	for i := 0; i < 10; i++ {
-		err = dm.Delete(ctx, testutil.ToKey(i))
+		_, err = dm.Delete(ctx, testutil.ToKey(i))
 		require.NoError(t, err)
 	}
 

@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -62,7 +62,7 @@ func (dm *DMap) unlockKey(ctx context.Context, key string, token []byte) error {
 	}
 
 	// release it.
-	err = dm.deleteKeys(ctx, key)
+	_, err = dm.deleteKeys(ctx, key)
 	if err != nil {
 		return fmt.Errorf("unlock failed because of delete: %w", err)
 	}

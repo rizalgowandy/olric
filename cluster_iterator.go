@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -237,6 +237,8 @@ func (i *ClusterIterator) next() bool {
 	return true
 }
 
+// Next returns true if there is more key in the iterator implementation.
+// Otherwise, it returns false
 func (i *ClusterIterator) Next() bool {
 	i.mtx.Lock()
 	defer i.mtx.Unlock()
@@ -250,6 +252,7 @@ func (i *ClusterIterator) Next() bool {
 	return i.next()
 }
 
+// Key returns a key name from the distributed map.
 func (i *ClusterIterator) Key() string {
 	i.mtx.Lock()
 	defer i.mtx.Unlock()
@@ -270,7 +273,7 @@ func (i *ClusterIterator) fetchRoutingTablePeriodically() {
 			return
 		case <-time.After(time.Second):
 			if err := i.fetchRoutingTable(); err != nil {
-				i.logger.Printf("[ERROR] Failed to fetch the latest routing table: %s", err)
+				i.logger.Printf("[ERROR] Failed to fetch the latest version of the routing table: %s", err)
 			}
 		}
 	}
@@ -291,6 +294,7 @@ func (i *ClusterIterator) fetchRoutingTable() error {
 	return nil
 }
 
+// Close stops the iteration and releases allocated resources.
 func (i *ClusterIterator) Close() {
 	select {
 	case <-i.ctx.Done():

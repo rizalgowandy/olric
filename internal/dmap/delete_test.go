@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ func TestDMap_Delete_Cluster(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		err = dm2.Delete(ctx, testutil.ToKey(i))
+		_, err = dm2.Delete(ctx, testutil.ToKey(i))
 		require.NoError(t, err)
 
 		_, err = dm2.Get(ctx, testutil.ToKey(i))
@@ -118,7 +118,7 @@ func TestDMap_Delete_Lookup(t *testing.T) {
 	require.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		err = dm2.Delete(ctx, testutil.ToKey(i))
+		_, err = dm2.Delete(ctx, testutil.ToKey(i))
 		require.NoError(t, err)
 
 		_, err = dm2.Get(ctx, testutil.ToKey(i))
@@ -158,7 +158,7 @@ func TestDMap_Delete_StaleFragments(t *testing.T) {
 	}
 
 	for i := 0; i < 100; i++ {
-		err = dm2.Delete(ctx, testutil.ToKey(i))
+		_, err = dm2.Delete(ctx, testutil.ToKey(i))
 		if err != nil {
 			t.Fatalf("Expected nil. Got: %v", err)
 		}
@@ -290,7 +290,7 @@ func TestDMap_Delete_Backup(t *testing.T) {
 	}
 
 	for i := 0; i < 10; i++ {
-		err = dm2.Delete(ctx, testutil.ToKey(i))
+		_, err = dm2.Delete(ctx, testutil.ToKey(i))
 		if err != nil {
 			t.Fatalf("Expected nil. Got: %v", err)
 		}
@@ -334,7 +334,7 @@ func TestDMap_Delete_Compaction(t *testing.T) {
 	}
 
 	for i := 0; i < 100; i++ {
-		err = dm.Delete(ctx, testutil.ToKey(i))
+		_, err = dm.Delete(ctx, testutil.ToKey(i))
 		require.NoError(t, err)
 
 		_, err = dm.Get(ctx, testutil.ToKey(i))

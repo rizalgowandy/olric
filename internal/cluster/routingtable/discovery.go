@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	ErrServerGone  = errors.New("server is gone")
-	ErrClusterJoin = errors.New("cannot join the cluster")
+	ErrServerGone   = errors.New("server is gone")
+	ErrNotJoinedYet = errors.New("not joined yet")
+	ErrClusterJoin  = errors.New("cannot join the cluster")
 	// ErrOperationTimeout is returned when an operation times out.
 	ErrOperationTimeout = errors.New("operation timeout")
 )

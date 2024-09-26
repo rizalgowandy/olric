@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ package olric
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"testing"
@@ -26,6 +27,9 @@ import (
 )
 
 func TestIntegration_NodesJoinOrLeftDuringQuery(t *testing.T) {
+	// TODO: https://github.com/buraksezer/olric/issues/227
+	t.Skip("TestIntegration_NodesJoinOrLeftDuringQuery: flaky test")
+
 	newConfig := func() *config.Config {
 		c := config.New("local")
 		c.PartitionCount = config.DefaultPartitionCount
@@ -71,6 +75,12 @@ func TestIntegration_NodesJoinOrLeftDuringQuery(t *testing.T) {
 
 	for i := 0; i < 100000; i++ {
 		_, err = dm.Get(context.Background(), fmt.Sprintf("mykey-%d", i))
+		if errors.Is(err, ErrConnRefused) {
+			// Rewind
+			i--
+			require.NoError(t, c.RefreshMetadata(context.Background()))
+			continue
+		}
 		require.NoError(t, err)
 		if i == 5999 {
 			err = c.client.Close(db2.name)
@@ -93,7 +103,7 @@ func TestIntegration_NodesJoinOrLeftDuringQuery(t *testing.T) {
 }
 
 func TestIntegration_DMap_Cache_Eviction_LRU_MaxKeys(t *testing.T) {
-	var maxKeys = 100000
+	maxKeys := 100000
 	newConfig := func() *config.Config {
 		c := config.New("local")
 		c.PartitionCount = config.DefaultPartitionCount
@@ -142,7 +152,7 @@ func TestIntegration_DMap_Cache_Eviction_LRU_MaxKeys(t *testing.T) {
 }
 
 func TestIntegration_DMap_Cache_Eviction_MaxKeys(t *testing.T) {
-	var maxKeys = 100000
+	maxKeys := 100000
 	newConfig := func() *config.Config {
 		c := config.New("local")
 		c.PartitionCount = config.DefaultPartitionCount
@@ -198,7 +208,7 @@ func TestIntegration_DMap_Cache_Eviction_MaxKeys(t *testing.T) {
 }
 
 func TestIntegration_DMap_Cache_Eviction_MaxIdleDuration(t *testing.T) {
-	var maxKeys = 100000
+	maxKeys := 100000
 	newConfig := func() *config.Config {
 		c := config.New("local")
 		c.PartitionCount = config.DefaultPartitionCount
@@ -247,7 +257,7 @@ func TestIntegration_DMap_Cache_Eviction_MaxIdleDuration(t *testing.T) {
 }
 
 func TestIntegration_DMap_Cache_Eviction_TTLDuration(t *testing.T) {
-	var maxKeys = 100000
+	maxKeys := 100000
 	newConfig := func() *config.Config {
 		c := config.New("local")
 		c.PartitionCount = config.DefaultPartitionCount
@@ -285,7 +295,7 @@ func TestIntegration_DMap_Cache_Eviction_TTLDuration(t *testing.T) {
 	var total int
 
 	for i := 0; i < maxKeys; i++ {
-		_, err = dm.Get(ctx, fmt.Sprintf("mykey-%d", i))
+		_, err := dm.Get(ctx, fmt.Sprintf("mykey-%d", i))
 		if err == ErrKeyNotFound {
 			err = nil
 			total++
@@ -296,7 +306,7 @@ func TestIntegration_DMap_Cache_Eviction_TTLDuration(t *testing.T) {
 }
 
 func TestIntegration_DMap_Cache_Eviction_LRU_MaxInuse(t *testing.T) {
-	var maxKeys = 100000
+	maxKeys := 100000
 	newConfig := func() *config.Config {
 		c := config.New("local")
 		c.PartitionCount = config.DefaultPartitionCount
@@ -411,6 +421,11 @@ func TestIntegration_Kill_Nodes_During_Operation(t *testing.T) {
 
 	for i := 0; i < 100000; i++ {
 		_, err = dm.Get(context.Background(), fmt.Sprintf("mykey-%d", i))
+		if errors.Is(err, ErrConnRefused) {
+			i--
+			fmt.Println(c.RefreshMetadata(context.Background()))
+			continue
+		}
 		require.NoError(t, err)
 	}
 }

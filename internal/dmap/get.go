@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -205,7 +205,7 @@ func (dm *DMap) lookupOnReplicas(hkey uint64, key string) []*version {
 		err = protocol.ConvertError(err)
 		if err != nil {
 			if dm.s.log.V(6).Ok() {
-				dm.s.log.V(6).Printf("[ERROR] Failed to call get on"+
+				dm.s.log.V(6).Printf("[DEBUG] Failed to call get on"+
 					" a replica owner: %s: %v", host, err)
 			}
 			continue
@@ -214,9 +214,8 @@ func (dm *DMap) lookupOnReplicas(hkey uint64, key string) []*version {
 		value, err := cmd.Bytes()
 		err = protocol.ConvertError(err)
 		if err != nil {
-			// TODO: Improve logging
 			if dm.s.log.V(6).Ok() {
-				dm.s.log.V(6).Printf("[ERROR] Failed to call get on"+
+				dm.s.log.V(6).Printf("[DEBUG] Failed to call get on"+
 					" a replica owner: %s: %v", host, err)
 			}
 		}
@@ -249,7 +248,7 @@ func (dm *DMap) readRepair(winner *version, versions []*version) {
 			}
 
 			f.Lock()
-			e := newEnv(nil)
+			e := newEnv(context.Background())
 			e.hkey = hkey
 			e.fragment = f
 			err = dm.putEntryOnFragment(e, winner.entry)

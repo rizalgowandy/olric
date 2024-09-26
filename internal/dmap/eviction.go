@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ func (dm *DMap) isKeyIdleOnFragment(hkey uint64, f *fragment) bool {
 	if errors.Is(err, storage.ErrKeyNotFound) {
 		return false
 	}
-	// TODO: Handle other errors.
+	//TODO: Handle other errors.
 	ttl := (dm.config.maxIdleDuration.Nanoseconds() + lastAccess) / 1000000
 	return isKeyExpired(ttl)
 }

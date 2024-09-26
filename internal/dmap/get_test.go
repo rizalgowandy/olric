@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ func TestDMap_Get_NilValue(t *testing.T) {
 	}
 	require.Equal(t, []byte{}, gr.Value())
 
-	err = dm.Delete(ctx, "foobar")
+	_, err = dm.Delete(ctx, "foobar")
 	if err != nil {
 		t.Fatalf("Expected nil. Got: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestDMap_Get_NilValue_Cluster(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []byte{}, gr.Value())
 
-	err = dm2.Delete(ctx, "foobar")
+	_, err = dm2.Delete(ctx, "foobar")
 	require.NoError(t, err)
 
 	_, err = dm2.Get(ctx, "foobar")

@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,12 +52,12 @@ func (dm *DMap) destroyOnCluster(ctx context.Context) error {
 			}
 			defer sem.Release(1)
 
-			// TODO: Improve logging
-			dm.s.log.V(6).Printf("[DEBUG] Calling Destroy command on %s for %s", addr, dm.name)
+			dm.s.log.V(6).Printf("[DEBUG] Calling DM.DESTROY command on %s for %s", addr, dm.name)
 			cmd := protocol.NewDestroy(dm.name).SetLocal().Command(dm.s.ctx)
 			rc := dm.s.client.Get(addr)
 			err := rc.Process(ctx, cmd)
 			if err != nil {
+				dm.s.log.V(3).Printf("[ERROR] DM.DESTROY returned an error: %v", err)
 				return err
 			}
 			return cmd.Err()

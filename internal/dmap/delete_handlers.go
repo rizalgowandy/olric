@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,13 +32,13 @@ func (s *Service) delCommandHandler(conn redcon.Conn, cmd redcon.Command) {
 		return
 	}
 
-	err = dm.deleteKeys(s.ctx, delCmd.Keys...)
+	count, err := dm.deleteKeys(s.ctx, delCmd.Keys...)
 	if err != nil {
 		protocol.WriteError(conn, err)
 		return
 	}
 
-	conn.WriteInt(len(delCmd.Keys))
+	conn.WriteInt(count)
 }
 
 func (s *Service) delEntryCommandHandler(conn redcon.Conn, cmd redcon.Command) {

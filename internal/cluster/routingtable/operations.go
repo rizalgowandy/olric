@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ import (
 )
 
 func (r *RoutingTable) lengthOfPartCommandHandler(conn redcon.Conn, cmd redcon.Command) {
+	// The command handlers of the routing table service should wait for the cluster join event.
+	<-r.joined
+
 	lengthOfPartCmd, err := protocol.ParseLengthOfPartCommand(cmd)
 	if err != nil {
 		protocol.WriteError(conn, err)
@@ -61,6 +64,9 @@ func (r *RoutingTable) verifyRoutingTable(id uint64, table map[uint64]*route) er
 }
 
 func (r *RoutingTable) updateRoutingCommandHandler(conn redcon.Conn, cmd redcon.Command) {
+	// The command handlers of the routing table service should wait for the cluster join event.
+	<-r.joined
+
 	r.updateRoutingMtx.Lock()
 	defer r.updateRoutingMtx.Unlock()
 

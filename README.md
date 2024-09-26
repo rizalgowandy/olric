@@ -2,16 +2,16 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/buraksezer/olric.svg)](https://pkg.go.dev/github.com/buraksezer/olric) [![Coverage Status](https://coveralls.io/repos/github/buraksezer/olric/badge.svg?branch=master)](https://coveralls.io/github/buraksezer/olric?branch=master) [![Build Status](https://travis-ci.org/buraksezer/olric.svg?branch=master)](https://travis-ci.org/buraksezer/olric) [![Go Report Card](https://goreportcard.com/badge/github.com/buraksezer/olric)](https://goreportcard.com/report/github.com/buraksezer/olric) [![Discord](https://img.shields.io/discord/721708998021087273.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/ahK7Vjr8We) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Olric is a distributed, in-memory data structure store. It's designed from the ground up to be distributed, and it can be 
+Olric is a distributed, in-memory key/value store and cache. It's designed from the ground up to be distributed, and it can be 
 used both as an embedded Go library and as a language-independent service.
 
 With Olric, you can instantly create a fast, scalable, shared pool of RAM across a cluster of computers.
 
-Olric is implemented in [Go](https://go.dev/) and uses the [Redis protocol](https://redis.io/topics/protocol). That means Olric has client implementations in all major programming 
+Olric is implemented in [Go](https://go.dev/) and uses the [Redis serialization protocol](https://redis.io/topics/protocol). So Olric has client implementations in all major programming 
 languages.
 
 Olric is highly scalable and available. Distributed applications can use it for distributed caching, clustering and 
-Publish-Subscribe messaging.
+publish-subscribe messaging.
 
 It is designed to scale out to hundreds of members and thousands of clients. When you add new members, they automatically 
 discover the cluster and linearly increase the memory capacity. Olric offers simple scalability, partitioning (sharding), 
@@ -22,22 +22,22 @@ See [Docker](#docker) and [Samples](#samples) sections to get started!
 
 Join our [Discord server!](https://discord.gg/ahK7Vjr8We)
 
-The current production version is [v0.4.5](https://github.com/buraksezer/olric/tree/release/v0.4.0#olric-)
+The current production version is [v0.5.7](https://github.com/buraksezer/olric/tree/release/v0.5.0#olric-)
 
 ### About versions
 
-Olric v0.4 and previous versions use *Olric Binary Protocol*, v0.5 uses [Redis protocol](https://redis.io/docs/reference/protocol-spec/) for communication and the API was significantly changed.
+Olric v0.4 and previous versions use *Olric Binary Protocol*, v0.5.x and later use [Redis serialization protocol](https://redis.io/docs/reference/protocol-spec/) for communication and the API was significantly changed.
 Olric v0.4.x tree is going to receive bug fixes and security updates forever, but I would recommend considering an upgrade to the new version.
 
-This document only covers `v0.5`. See v0.4.x documents [here](https://github.com/buraksezer/olric/tree/release/v0.4.0#olric-).
-
-**Important note**: Documenting `v0.5` is an ongoing effort. So some parts of this document may be wrong or inaccurate.
+This document only covers `v0.5.x` and later. See v0.4.x documents [here](https://github.com/buraksezer/olric/tree/release/v0.4.0#olric-).
 
 ## At a glance
 
 * Designed to share some transient, approximate, fast-changing data between servers,
-* Has a Redis compatible API and uses Redis protocol,
-* Provides a drop-in replacement for Redis Publish/Subscribe messaging system.
+* Uses Redis serialization protocol,
+* Implements a distributed hash table,
+* Provides a drop-in replacement for Redis Publish/Subscribe messaging system,
+* Supports both programmatic and declarative configuration, 
 * Embeddable but can be used as a language-independent service with *olricd*,
 * Supports different eviction algorithms (including LRU and TTL),
 * Highly available and horizontally scalable,
@@ -45,14 +45,14 @@ This document only covers `v0.5`. See v0.4.x documents [here](https://github.com
 * Supports replication by default (with sync and async options),
 * Quorum-based voting for replica control (Read/Write quorums),
 * Supports atomic operations,
-* Implements an iterator on distributed maps,
+* Provides an iterator on distributed maps,
 * Provides a plugin interface for service discovery daemons,
 * Provides a locking primitive which inspired by [SETNX of Redis](https://redis.io/commands/setnx#design-pattern-locking-with-codesetnxcode),
 
 ## Possible Use Cases
 
 Olric is an eventually consistent, unordered key/value data store. It supports various eviction mechanisms for distributed caching implementations. Olric 
-also provides Publish-Subscribe, data replication, failure detection and simple anti-entropy services. 
+also provides publish-subscribe messaging, data replication, failure detection and simple anti-entropy services. 
 
 It's good at distributed caching and publish/subscribe messaging.
 
@@ -68,7 +68,8 @@ It's good at distributed caching and publish/subscribe messaging.
   * [Operation Modes](#operation-modes)
     * [Embedded Member](#embedded-member)
     * [Client-Server](#client-server)
-* [Golang client](#golang-client)
+* [Golang Client](#golang-client)
+* [Cluster Events](#cluster-events)
 * [Commands](#commands)
   * [Distributed Map](#distributed-map)
     * [DM.PUT](#dmput)
@@ -136,7 +137,7 @@ It's good at distributed caching and publish/subscribe messaging.
 * Designed to share some transient, approximate, fast-changing data between servers,
 * Accepts arbitrary types as value,
 * Only in-memory,
-* Has a Redis compatible API and uses Redis protocol,
+* Uses Redis protocol,
 * Compatible with existing Redis clients,
 * Embeddable but can be used as a language-independent service with olricd,
 * GC-friendly storage engine,
@@ -151,29 +152,30 @@ It's good at distributed caching and publish/subscribe messaging.
 * Supports replication by default (with sync and async options),
 * Quorum-based voting for replica control,
 * Thread-safe by default,
-* Supports [distributed queries](#query) on keys,
+* Provides an iterator on distributed maps,
 * Provides a plugin interface for service discovery daemons and cloud providers,
 * Provides a locking primitive which inspired by [SETNX of Redis](https://redis.io/commands/setnx#design-pattern-locking-with-codesetnxcode),
-* Supports [distributed topic](#distributed-topic) data structure,
+* Provides a drop-in replacement of Redis' Publish-Subscribe messaging feature.
 
 See [Architecture](#architecture) section to see details.
 
 ## Support
 
-You feel free to ask any questions about Olric and possible integration problems.
+We have a few communication channels: 
 
+* [Issue Tracker](https://github.com/buraksezer/olric/issues)
 * [Discord server](https://discord.gg/ahK7Vjr8We)
-* [Mail group on Google Groups](https://groups.google.com/forum/#!forum/olric-user)
-* [GitHub Discussions](https://github.com/buraksezer/olric/discussions)
 
-You also feel free to open an issue on GitHub to report bugs and share feature requests.
+You should know that the issue tracker is only intended for bug reports and feature requests.
+
+Software doesn't maintain itself. If you need support on complex topics or request new features, please consider [sponsoring Olric](https://github.com/sponsors/buraksezer).
 
 ## Installing
 
 With a correctly configured Golang environment:
 
 ```
-go install github.com/buraksezer/olric/cmd/olricd@v0.5.0-beta.2
+go install github.com/buraksezer/olric/cmd/olricd@v0.5.7
 ```
 
 Now you can start using Olric:
@@ -189,13 +191,13 @@ See [Configuration](#configuration) section to create your cluster properly.
 You can launch `olricd` Docker container by running the following command. 
 
 ```bash
-docker run -p 3320:3320 olricio/olricd:v0.5.0-beta.2
+docker run -p 3320:3320 olricio/olricd:v0.5.4
 ``` 
 
 This command will pull olricd Docker image and run a new Olric Instance. You should know that the container exposes 
 `3320` and `3322` ports. 
 
-Now, you can access a running Olric instance by using `redis-cli`.
+Now, you can access an Olric cluster using any Redis client including `redis-cli`:
 
 ```bash
 redis-cli -p 3320
@@ -211,7 +213,7 @@ OK
 With olricd, you can create an Olric cluster with a few commands. This is how to install olricd:
 
 ```bash
-go install github.com/buraksezer/olric/cmd/olricd@v0.5.0-beta.2
+go install github.com/buraksezer/olric/cmd/olricd@v0.5.7
 ```
 
 Let's create a cluster with the following:
@@ -228,13 +230,14 @@ OLRICD_CONFIG=<YOUR_CONFIG_FILE_PATH> olricd
 ```
 
 Olric uses [hashicorp/memberlist](https://github.com/hashicorp/memberlist) for failure detection and cluster membership. 
-Currently, there are different ways to discover peers in a cluster. You can use a static list of nodes in your `olricd.yaml` 
-file. It's ideal for development and test environments. Olric also supports Consul, Kubernetes and well-known cloud providers
+Currently, there are different ways to discover peers in a cluster. You can use a static list of nodes in your configuration. 
+It's ideal for development and test environments. Olric also supports Consul, Kubernetes and all well-known cloud providers
 for service discovery. Please take a look at [Service Discovery](#service-discovery) section for further information.
 
 See [Client-Server](#client-server) section to get more information about this deployment scenario.
 
 #### Maintaining a list of peers manually
+
 Basically, there is a list of nodes under `memberlist` block in the configuration file. In order to create an Olric cluster, 
 you just need to add `Host:Port` pairs of the other nodes. Please note that the `Port` is the memberlist port of the peer.
 It is `3322` by default. 
@@ -250,8 +253,7 @@ with each other. So an Olric node can discover the whole cluster by using a sing
 
 #### Embedding into your Go application.
 
-Olric was originally designed as an embeddable, distributed version of Golang's built-in map. Building distributed systems
-based on Olric is an easy task. See [Samples](#samples) section to learn how to embed Olric into your existing Golang application.
+See [Samples](#samples) section to learn how to embed Olric into your existing Golang application.
 
 ### Operation Modes
 
@@ -264,9 +266,9 @@ Member Mode is having a low-latency data access and locality.
 
 #### Client-Server
 
-In the Client-Server deployment, Olric data and services are centralized in one or more servers, and they are
-accessed by the application through clients. You can have a cluster of servers that can be independently created
-and scaled. Your clients communicate with these members to reach to Olric data and services on them.
+In Client-Server Mode, Olric data and services are centralized in one or more servers, and they are accessed by the 
+application through clients. You can have a cluster of servers that can be independently created and scaled. Your clients 
+communicate with these members to reach to Olric data and services on them.
 
 Client-Server deployment has advantages including more predictable and reliable performance, easier identification
 of problem causes and, most importantly, better scalability. When you need to scale in this deployment type, just add more
@@ -274,12 +276,27 @@ Olric server members. You can address client and server scalability concerns sep
 
 ## Golang Client
 
-The official Golang client is defined by the `Client` interface. There are two different implementations of it in this repository.
-`EmbeddedClient` provides a client implementation for [embedded-member](#embedded-member) scenario, `ClusterClient` provides an implementation of the same interface
-for [client-server](#client-server) deployment scenario. Obviously, you can use `ClusterClient` for your embedded-member deployments. But it's good to use `EmbeddedClient`
-provides a better performance due to localization of the queries.
+The official Golang client is defined by the `Client` interface. There are two different implementations of that interface in 
+this repository. `EmbeddedClient` provides a client implementation for [embedded-member](#embedded-member) scenario, 
+`ClusterClient` provides an implementation of the same interface for [client-server](#client-server) deployment scenario. 
+Obviously, you can use `ClusterClient` for your embedded-member deployments. But it's good to use `EmbeddedClient` provides 
+a better performance due to localization of the queries.
 
-See the client documentation on [pkg.go.dev](https://pkg.go.dev/github.com/buraksezer/olric@v0.5.0-beta.3)
+See the client documentation on [pkg.go.dev](https://pkg.go.dev/github.com/buraksezer/olric@v0.5.7)
+
+## Cluster Events
+
+Olric can send push cluster events to `cluster.events` channel. Available cluster events:
+
+* node-join-event
+* node-left-event
+* fragment-migration-event
+* fragment-received-even
+
+If you want to receive these events, set `true` to `EnableClusterEventsChannel` and subscribe to `cluster.events` channel. 
+The default is `false`.
+
+See [events/cluster_events.go](events/cluster_events.go) file to get more information about events.
 
 ## Commands
 
@@ -873,7 +890,6 @@ CLUSTER.MEMBERS
    3) "true" <- Is cluster coordinator (the oldest node)
 ```
 
-
 ### Others
 
 #### PING
@@ -891,10 +907,12 @@ The STATS command returns information and statistics about the server in JSON fo
 
 ## Configuration
 
+Olric supports both declarative and programmatic configurations. You can choose one of them depending on your needs.
 You should feel free to ask any questions about configuration and integration. Please see [Support](#support) section.
 
 ### Embedded-Member Mode
 
+#### Programmatic Configuration
 Olric provides a function to generate default configuration to use in embedded-member mode:
 
 ```go
@@ -908,7 +926,7 @@ Default configuration is good enough for distributed caching scenario. In order 
 
 See [Sample Code](#sample-code) section for an introduction.
 
-#### Manage the configuration in YAML format
+#### Declarative configuration with YAML format
 
 You can also import configuration from a YAML file by using the `Load` function:
 
@@ -978,12 +996,6 @@ timeout and 0 for default. The default is config.DefaultReadTimeout
 
 Timeout for socket writes. If reached, commands will fail with a timeout instead of blocking. The default is config.DefaultWriteTimeout
 
-##### config.KeepAlive
-
-KeepAlive specifies the interval between keep-alive probes for an active network connection. If zero, keep-alive probes 
-are sent with a default value (currently 15 seconds), if supported by the protocol and operating system. Network protocols 
-or operating systems that do not support keep-alives ignore this field. If negative, keep-alive probes are disabled.
-
 ## Architecture
 
 ### Overview
@@ -991,11 +1003,7 @@ or operating systems that do not support keep-alives ignore this field. If negat
 Olric uses:
 * [hashicorp/memberlist](https://github.com/hashicorp/memberlist) for cluster membership and failure detection,
 * [buraksezer/consistent](https://github.com/buraksezer/consistent) for consistent hashing and load balancing,
-* [Golang's TCP implementation](https://golang.org/pkg/net/#TCPConn) as transport layer,
-* Different alternatives for serialization:
-    * [encoding/gob](https://golang.org/pkg/encoding/gob/),
-    * [encoding/json](https://golang.org/pkg/encoding/json/), 
-    * [vmihailenco/msgpack](https://github.com/vmihailenco/msgpack).
+* [Redis Serialization Protocol](https://github.com/tidwall/redcon) for communication.
 
 Olric distributes data among partitions. Every partition is being owned by a cluster member and may have one or more backups for redundancy. 
 When you read or write a DMap entry, you transparently talk to the partition owner. Each request hits the most up-to-date version of a
@@ -1100,7 +1108,7 @@ it returns `ErrReadQuorum`.
 
 #### Simple Split-Brain Protection
 
-Olric implements a technique called *majority quorum* to manage split-brain conditions. If a network partitioning occurs, and some of the members
+Olric implements a technique called *majority quorum* to manage split-brain conditions. If a network partitioning occurs, and some members
 lost the connection to rest of the cluster, they immediately stops functioning and return an error to incoming requests. This behaviour is controlled by
 `MemberCountQuorum` parameter. It's default `1`. 
 
@@ -1221,7 +1229,16 @@ See [Hazelcast and the Mythical PA/EC System](https://dbmsmusings.blogspot.com/2
              
 ### Storage Engine
 
-Olric implements an append-only log file, indexed with a builtin map (uint64 => uint64). It creates new tables and evacuates existing data to the new ones if it needs to shrink or expand. 
+Olric implements a GC-friendly storage engine to store large amounts of data on RAM. Basically, it applies an append-only log file approach with indexes. 
+Olric inserts key/value pairs into pre-allocated byte slices (table in Olric terminology) and indexes that memory region by using Golang's built-in map. 
+The data type of this map is `map[uint64]uint64`. When a pre-allocated byte slice is full Olric allocates a new one and continues inserting the new data into it. 
+This design greatly reduces the write latency.
+
+When you want to read a key/value pair from the Olric cluster, it scans the related DMap fragment by iterating over the indexes(implemented by the built-in map). 
+The number of allocated byte slices should be small. So Olric would find the key immediately but technically, the read performance depends on the number of keys in the fragment. 
+The effect of this design on the read performance is negligible.
+
+The size of the pre-allocated byte slices is configurable.
 
 ## Samples
 
@@ -1478,6 +1495,117 @@ func main() {
   if err != nil {
     log.Printf("Failed to close ClusterClient: %v", err)
   }
+}
+```
+
+### SCAN on DMaps
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/buraksezer/olric"
+	"github.com/buraksezer/olric/config"
+)
+
+func main() {
+	// Sample for Olric v0.5.x
+
+	// Deployment scenario: embedded-member
+	// This creates a single-node Olric cluster. It's good enough for experimenting.
+
+	// config.New returns a new config.Config with sane defaults. Available values for env:
+	// local, lan, wan
+	c := config.New("local")
+
+	// Callback function. It's called when this node is ready to accept connections.
+	ctx, cancel := context.WithCancel(context.Background())
+	c.Started = func() {
+		defer cancel()
+		log.Println("[INFO] Olric is ready to accept connections")
+	}
+
+	// Create a new Olric instance.
+	db, err := olric.New(c)
+	if err != nil {
+		log.Fatalf("Failed to create Olric instance: %v", err)
+	}
+
+	// Start the instance. It will form a single-node cluster.
+	go func() {
+		// Call Start at background. It's a blocker call.
+		err = db.Start()
+		if err != nil {
+			log.Fatalf("olric.Start returned an error: %v", err)
+		}
+	}()
+
+	<-ctx.Done()
+
+	// In embedded-member scenario, you can use the EmbeddedClient. It implements
+	// the Client interface.
+	e := db.NewEmbeddedClient()
+
+	dm, err := e.NewDMap("bucket-of-arbitrary-items")
+	if err != nil {
+		log.Fatalf("olric.NewDMap returned an error: %v", err)
+	}
+
+	ctx, cancel = context.WithCancel(context.Background())
+
+	// Magic starts here!
+	fmt.Println("##")
+	fmt.Println("Insert 10 keys")
+	var key string
+	for i := 0; i < 10; i++ {
+		if i%2 == 0 {
+			key = fmt.Sprintf("even:%d", i)
+		} else {
+			key = fmt.Sprintf("odd:%d", i)
+		}
+		err = dm.Put(ctx, key, nil)
+		if err != nil {
+			log.Fatalf("Failed to call Put: %v", err)
+		}
+	}
+
+	i, err := dm.Scan(ctx)
+	if err != nil {
+		log.Fatalf("Failed to call Scan: %v", err)
+	}
+
+	fmt.Println("Iterate over all the keys")
+	for i.Next() {
+		fmt.Println(">> Key", i.Key())
+	}
+
+	i.Close()
+
+	i, err = dm.Scan(ctx, olric.Match("^even:"))
+	if err != nil {
+		log.Fatalf("Failed to call Scan: %v", err)
+	}
+
+	fmt.Println("\n\nScan with regex: ^even:")
+	for i.Next() {
+		fmt.Println(">> Key", i.Key())
+	}
+
+	i.Close()
+
+	// Don't forget the call Shutdown when you want to leave the cluster.
+	ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = db.Shutdown(ctx)
+	if err != nil {
+		log.Printf("Failed to shutdown Olric: %v", err)
+	}
 }
 ```
 

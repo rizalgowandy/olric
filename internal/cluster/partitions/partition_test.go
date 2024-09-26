@@ -1,4 +1,4 @@
-// Copyright 2018-2022 Burak Sezer
+// Copyright 2018-2024 Burak Sezer
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,15 +28,11 @@ type testFragment struct {
 }
 
 func (tf *testFragment) Stats() storage.Stats {
-	return storage.Stats{}
+	return storage.Stats{Length: tf.length}
 }
 
 func (tf *testFragment) Name() string {
 	return "test-data-structure"
-}
-
-func (tf *testFragment) Length() int {
-	return tf.length
 }
 
 func (tf *testFragment) Move(_ *Partition, _ string, _ []discovery.Member) error {
